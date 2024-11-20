@@ -7,8 +7,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
@@ -16,6 +18,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -26,16 +30,25 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import tt.info.paulrytaylor.LocationPublisher.controllers.Publisher
 import tt.info.paulrytaylor.LocationPublisher.controllers.Subscriber
+import tt.info.paulrytaylor.LocationPublisher.models.ClientModel
 import tt.info.paulrytaylor.LocationPublisher.models.LocationModel
+import tt.info.paulrytaylor.LocationPublisher.views.ClientAdapter
+import tt.info.paulrytaylor.LocationPublisher.views.ClientAdapterInterface
 import java.security.MessageDigest
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, ClientAdapterInterface {
     private val isPublisher: Boolean = false //yes, a flag to decide which app it will be (publisher or subscriber)
     private var publisher: Publisher? = null
     private var subscriber: Subscriber? = null
     private var selectedStudentID: String? = null
     private var cachedLocations: List<LocationModel>? = null
+    private var clientAdapter: ClientAdapter? = null
     private lateinit var mMap: GoogleMap
+    private var firstDate: String = "N/A"
+    private var lastDate: String = "N/A"
+    private var minSpeed: String = "N/A"
+    private var maxSpeed: String = "N/A"
+    private var aveSpeed: String = "N/A"
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -45,7 +58,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val updateRunnable = object : Runnable {
             @RequiresApi(Build.VERSION_CODES.O)
             override fun run() {
-                updateMap()
+                selectStudentID(selectedStudentID)
                 handler.postDelayed(this, 1000)
             }
         }
@@ -62,8 +75,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        subscriber = Subscriber(this) //outside the !isPublisher condition for both apps to use a db LOL
+        while(subscriber!!.isFailed()) subscriber = Subscriber(this);
         if(!isPublisher){
-            subscriber = Subscriber(this)
+            clientAdapter = ClientAdapter(this)
+            findViewById<RecyclerView>(R.id.clients).adapter = clientAdapter
+            findViewById<RecyclerView>(R.id.clients).layoutManager = LinearLayoutManager(this)
             val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
             mapFragment.getMapAsync(this)
@@ -74,6 +91,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateUI(){
         findViewById<ConstraintLayout>(R.id.publisher).visibility = View.GONE
         findViewById<ConstraintLayout>(R.id.subscriber).visibility = View.GONE
+        findViewById<RecyclerView>(R.id.clients).visibility = View.GONE
+        findViewById<TextView>(R.id.tvSubscriber3).visibility = View.GONE
+        findViewById<TextView>(R.id.tvSubscriber4).visibility = View.GONE
+        findViewById<TextView>(R.id.tvSubscriber5).visibility = View.GONE
         //above has constraintlayout views that are going to be set to invisible at first
 
         //now to set visibility for a specific constraintlayout view based on whatever logic
@@ -85,9 +106,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<ConstraintLayout>(R.id.subscriber).visibility = View.VISIBLE
         if(selectedStudentID==null) {
             //change the view to the default screen
+            findViewById<RecyclerView>(R.id.clients).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.tvSubscriber2).text = "Live View (Last 5 Minutes)"
         }
         else{
             //change the view to the view of an individual student
+            findViewById<TextView>(R.id.tvSubscriber3).text = "Max Speed: ${maxSpeed}"
+            findViewById<TextView>(R.id.tvSubscriber3).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.tvSubscriber4).text = "Min Speed: ${minSpeed}"
+            findViewById<TextView>(R.id.tvSubscriber4).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.tvSubscriber5).text = "Average Speed: ${aveSpeed}"
+            findViewById<TextView>(R.id.tvSubscriber5).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.tvSubscriber2).text = "FROM ${firstDate} TO ${lastDate}"
         }
     }
     @RequiresApi(Build.VERSION_CODES.O)
@@ -117,8 +147,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         var prevLocation: LocationModel? = null
         val polyLineList: MutableList<LatLng> = mutableListOf() //for locations of a unique student
         val entirePolyLineList: MutableList<LatLng> = mutableListOf() //for all locations
+        val clientModelAll: ClientModel = ClientModel("")
+        val clientModelHashMap: HashMap<String,ClientModel> = HashMap()
 
         for(location in locations){
+            clientModelAll.add(location.speed)
+            if(clientModelHashMap.get(location.student_id)==null)
+                clientModelHashMap.set(location.student_id, ClientModel(location.student_id));
+            clientModelHashMap.get(location.student_id)?.add(location.speed)
             val position: LatLng = LatLng(location.latitude,location.longitude)
             entirePolyLineList.add(position)
             //now to use the graph api with the location and colour and get the drawing party started
@@ -141,8 +177,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 polyLineList.clear()
             }
             polyLineList.add(position)
+            if(prevLocation==null) firstDate = location.time;
             prevLocation = location
         }
+
+        if(prevLocation==null){
+            firstDate="N/A"
+            lastDate="N/A"
+            minSpeed="N/A"
+            maxSpeed="N/A"
+            aveSpeed="N/A"
+        }
+        else{
+            lastDate=prevLocation.time
+            minSpeed = clientModelAll.min.toString()
+            maxSpeed = clientModelAll.max.toString()
+            aveSpeed = clientModelAll.average().toString()
+        }
+        clientAdapter?.updateClients(clientModelHashMap)
 
         val bounds = LatLngBounds.builder()
         entirePolyLineList.forEach { bounds.include(it) }
@@ -163,6 +215,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun selectStudentID(id: String?){ //for the subscriber to change view
+        selectedStudentID = id
+        updateMap()
+        updateUI()
+    }
     fun startPublishing(view: View){
         val studentID: String = findViewById<EditText>(R.id.studentID).text.toString()
         val validStudentID: Boolean = studentID.length == 9 && studentID.startsWith("81")

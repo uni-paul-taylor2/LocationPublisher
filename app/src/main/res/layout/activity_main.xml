@@ -67,6 +67,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!--Subscriber Screen-->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/subscriber"
         android:padding="32dp"
@@ -106,14 +107,49 @@
             android:layout_height="0dp"
             app:layout_constraintHeight_percent="0.5"
             app:layout_constraintTop_toBottomOf="@+id/tvSubscriber2" />
+        <!--Main-->
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/attendees"
+            android:id="@+id/clients"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/map"
             app:layout_constraintHeight_percent="0.30" />
+        <!--View More-->
+        <TextView
+            android:id="@+id/tvSubscriber3"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="Max Speed: N/A"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintHeight_percent="0.10"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/map" />
+        <TextView
+            android:id="@+id/tvSubscriber4"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="Min Speed: N/A"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintHeight_percent="0.10"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSubscriber3" />
+        <TextView
+            android:id="@+id/tvSubscriber5"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="Average Speed: N/A"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintHeight_percent="0.10"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSubscriber4" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
