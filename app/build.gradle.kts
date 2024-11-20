@@ -46,6 +46,7 @@ android {
 
 dependencies {
     implementation("com.hivemq:hivemq-mqtt-client:1.3.3")
+    implementation("com.google.android.gms:play-services-maps:18.0.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

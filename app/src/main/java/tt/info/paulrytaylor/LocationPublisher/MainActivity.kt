@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
@@ -29,10 +30,11 @@ import tt.info.paulrytaylor.LocationPublisher.models.LocationModel
 import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private val isPublisher: Boolean = true //yes, a flag to decide which app it will be (publisher or subscriber)
+    private val isPublisher: Boolean = false //yes, a flag to decide which app it will be (publisher or subscriber)
     private var publisher: Publisher? = null
     private var subscriber: Subscriber? = null
     private var selectedStudentID: String? = null
+    private var cachedLocations: List<LocationModel>? = null
     private lateinit var mMap: GoogleMap
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -60,20 +62,27 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        if(!isPublisher){
+            subscriber = Subscriber(this)
+            val mapFragment = supportFragmentManager
+                .findFragmentById(R.id.map) as SupportMapFragment
+            mapFragment.getMapAsync(this)
+        }
         updateUI()
-        if(!isPublisher) subscriber = Subscriber(this);
     }
 
     private fun updateUI(){
-        findViewById<ConstraintLayout>(R.id.studentOnboarding).visibility = View.GONE
+        findViewById<ConstraintLayout>(R.id.publisher).visibility = View.GONE
+        findViewById<ConstraintLayout>(R.id.subscriber).visibility = View.GONE
         //above has constraintlayout views that are going to be set to invisible at first
 
         //now to set visibility for a specific constraintlayout view based on whatever logic
         if(isPublisher){
-            findViewById<ConstraintLayout>(R.id.studentOnboarding).visibility = View.VISIBLE
+            findViewById<ConstraintLayout>(R.id.publisher).visibility = View.VISIBLE
             return //well yeah, publisher just has this one view, word
         }
         //subscriber logic would go below here I guess
+        findViewById<ConstraintLayout>(R.id.subscriber).visibility = View.VISIBLE
         if(selectedStudentID==null) {
             //change the view to the default screen
         }
@@ -86,15 +95,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //this function is to run in an interval
         //this would read from the database because subscriber takes from mqtt and writes to database
         //after checking the selectedStudentID, it will determine what data to get from the database to handle
-        mMap.clear() //clear before redrawing...
-        if(selectedStudentID==null){ //the default screen
-            val allRecentLocations: List<LocationModel> = subscriber?.database?.getAllRecentLocations()!!
-            drawGraph(allRecentLocations)
+        val locations: List<LocationModel> =
+            if(selectedStudentID==null){subscriber?.database?.getAllRecentLocations()!!}
+            else{subscriber?.database?.getLocations(selectedStudentID!!)!!}
+        if(!locationListsEqual(locations)){
+            cachedLocations = locations
+            mMap.clear() //clear before redrawing...
+            drawGraph(locations)
         }
-        else{ //the individual screen
-            val studentLocations: List<LocationModel> = subscriber?.database?.getLocations(selectedStudentID!!)!!
-            drawGraph(studentLocations)
+    }
+    private fun locationListsEqual(currentBatch: List<LocationModel>): Boolean {
+        if(cachedLocations==null) return false;
+        for(i in currentBatch.indices){
+            if(!cachedLocations!![i].equals(currentBatch[i])) return false;
         }
+        return true;
     }
     private fun drawGraph(locations: List<LocationModel>){
         //assign a colour for an id then append the next point then draw a line.. the steps in a sentence
@@ -135,8 +150,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         if(polyLineList.size > 1){
             //draw the last polyline :D
             val digest: ByteArray = MessageDigest.getInstance("SHA-256")
-                .digest(prevLocation?.student_id!!.toByteArray())
-            val colour: String = "%02x".format(digest).substring(0,6)
+                .digest(prevLocation!!.student_id.toByteArray())
+            val colour: String = digest.joinToString("") { "%02x".format(it) }.substring(0,6)
             mMap.addPolyline(
                 PolylineOptions()
                     .addAll(polyLineList)

@@ -87,4 +87,8 @@ class LocationModel {
         student_id = id.toString()
         kmph = speed * 3.6
     }
+    fun equals(location: LocationModel): Boolean {
+        return this.id==location.id && this.ms_time==location.ms_time && this.speed==location.speed
+                && this.latitude==location.latitude && this.longitude==location.longitude
+    }
 }
