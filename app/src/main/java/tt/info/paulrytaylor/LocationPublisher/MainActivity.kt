@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val locations: List<LocationModel> =
             if(selectedStudentID==null){subscriber?.database?.getAllRecentLocations()!!}
             else{subscriber?.database?.getLocations(selectedStudentID!!)!!}
-        if(!locationListsEqual(locations)){
+        if(locations.isNotEmpty() && !locationListsEqual(locations)){
             cachedLocations = locations
             mMap.clear() //clear before redrawing...
             drawGraph(locations)
@@ -106,6 +106,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
     private fun locationListsEqual(currentBatch: List<LocationModel>): Boolean {
         if(cachedLocations==null) return false;
+        if(currentBatch.size!=cachedLocations!!.size) return false;
         for(i in currentBatch.indices){
             if(!cachedLocations!![i].equals(currentBatch[i])) return false;
         }
@@ -130,7 +131,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 //draw a polyline of the all the previous student_id locations here
                 val digest: ByteArray = MessageDigest.getInstance("SHA-256")
                     .digest(prevLocation.student_id.toByteArray())
-                val colour: String = "%02x".format(digest).substring(0,6)
+                val colour: String = digest.joinToString("") { "%02x".format(it) }.substring(0,6)
                 mMap.addPolyline(
                     PolylineOptions()
                         .addAll(polyLineList)
