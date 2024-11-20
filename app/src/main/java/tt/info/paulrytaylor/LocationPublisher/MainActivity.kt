@@ -108,16 +108,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, ClientAdapterInter
             //change the view to the default screen
             findViewById<RecyclerView>(R.id.clients).visibility = View.VISIBLE
             findViewById<TextView>(R.id.tvSubscriber2).text = "Live View (Last 5 Minutes)"
+            findViewById<TextView>(R.id.tvSubscriber1).text = "Assignment Two - Publisher"
         }
         else{
             //change the view to the view of an individual student
-            findViewById<TextView>(R.id.tvSubscriber3).text = "Max Speed: ${maxSpeed}"
+            findViewById<TextView>(R.id.tvSubscriber3).text = "Max Speed: ${maxSpeed} kmph"
             findViewById<TextView>(R.id.tvSubscriber3).visibility = View.VISIBLE
-            findViewById<TextView>(R.id.tvSubscriber4).text = "Min Speed: ${minSpeed}"
+            findViewById<TextView>(R.id.tvSubscriber4).text = "Min Speed: ${minSpeed} kmph"
             findViewById<TextView>(R.id.tvSubscriber4).visibility = View.VISIBLE
-            findViewById<TextView>(R.id.tvSubscriber5).text = "Average Speed: ${aveSpeed}"
+            findViewById<TextView>(R.id.tvSubscriber5).text = "Average Speed: ${aveSpeed} kmph"
             findViewById<TextView>(R.id.tvSubscriber5).visibility = View.VISIBLE
             findViewById<TextView>(R.id.tvSubscriber2).text = "FROM ${firstDate} TO ${lastDate}"
+            findViewById<TextView>(R.id.tvSubscriber1).text = "Summary of ${selectedStudentID}"
         }
     }
     @RequiresApi(Build.VERSION_CODES.O)
@@ -150,11 +152,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, ClientAdapterInter
         val clientModelAll: ClientModel = ClientModel("")
         val clientModelHashMap: HashMap<String,ClientModel> = HashMap()
 
-        for(location in locations){
-            clientModelAll.add(location.speed)
+        for(location in locations){ //kmph instead of speed (m/s)
+            clientModelAll.add(location.kmph)
             if(clientModelHashMap.get(location.student_id)==null)
                 clientModelHashMap.set(location.student_id, ClientModel(location.student_id));
-            clientModelHashMap.get(location.student_id)?.add(location.speed)
+            clientModelHashMap.get(location.student_id)?.add(location.kmph)
             val position: LatLng = LatLng(location.latitude,location.longitude)
             entirePolyLineList.add(position)
             //now to use the graph api with the location and colour and get the drawing party started

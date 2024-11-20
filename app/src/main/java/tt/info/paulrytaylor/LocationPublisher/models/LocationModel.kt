@@ -37,7 +37,7 @@ class LocationModel {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault())
     var time: String = ""
     var student_id: String = ""
-    var kmph: Number = 0
+    var kmph: Double = 0.0
     var bytes: ByteArray? = null
 
     @RequiresApi(Build.VERSION_CODES.O)

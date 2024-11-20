@@ -24,7 +24,7 @@ class ClientAdapter(private val clientAdapterInterface: ClientAdapterInterface) 
     }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val client = clients[position]
-        holder.clientTextView.text = "${client.student_id}\nmin: ${client.min}\nmax: ${client.max}"
+        holder.clientTextView.text = "Max: ${client.max} kmph\nMin: ${client.min} kmph\nAverage: ${client.average()} kmph"
         holder.clientButton.setOnClickListener {
             clientAdapterInterface.selectStudentID(client.student_id)
         }
