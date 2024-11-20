@@ -37,7 +37,7 @@ import tt.info.paulrytaylor.LocationPublisher.views.ClientAdapterInterface
 import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, ClientAdapterInterface {
-    private val isPublisher: Boolean = false //yes, a flag to decide which app it will be (publisher or subscriber)
+    private val isPublisher: Boolean = true //yes, a flag to decide which app it will be (publisher or subscriber)
     private var publisher: Publisher? = null
     private var subscriber: Subscriber? = null
     private var selectedStudentID: String? = null
