@@ -18,7 +18,7 @@ import androidx.core.view.WindowInsetsCompat
 class PermissionActivity : AppCompatActivity() {
     /// The [requestCode] variable acts as an identifier for the app that's requesting the permissions.
     private val requestCode = 1234
-    private val isPublisher: Boolean = false
+    private val isPublisher: Boolean = true
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
